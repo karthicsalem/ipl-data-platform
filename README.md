@@ -3,7 +3,7 @@ Learn Data Engineering and Data Analysis with IPL data
 
 ## What this aims to be
 A data engineering/analytics project that aimed at learning, making use of data from a familiar topic(cricket).
-Wishlist of Topics/Areas to cover: AWS , Power BI , Git workflows/actions, orchestration , unit testing, bash , python , SQL , file handling
+Wishlist of Topics/Areas to cover: AWS , Power BI , Git lifecycle along with workflows/actions, orchestration , unit testing, bash , python , SQL , file handling
 
 ## Acknowledgements
 
