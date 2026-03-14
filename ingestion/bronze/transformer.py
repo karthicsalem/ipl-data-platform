@@ -10,6 +10,18 @@ def read_raw_json(spark,files):
     raw_df.createOrReplaceTempView("row_wise")
     return raw_df
 
+def extract_match_player_registry(spark):
+    player_registry_df= spark.sql("""
+                SELECT
+                regexp_extract(input_file_name(), '([^/]+)\\.json$', 1) AS match_id,
+                player_name,
+                player_id
+                from row_wise rw
+                LATERAL view explode(from_json(to_json(info.registry.people),'map<string,string>')) as player_name,player_id
+        """)
+    player_registry_df.createOrReplaceTempView('player_match_registry')
+    print(f"Player match registry built: {player_registry_df.count()} records")
+
 def flatten_to_bronze(spark):
     bronze_df = spark.sql("""
     SELECT
@@ -30,7 +42,12 @@ def flatten_to_bronze(spark):
         info.toss.decision                                   AS toss_decision,
         info.outcome.winner                                  AS match_winner,
         info.player_of_match[0]                              AS player_of_match,
-
+        CASE WHEN info.outcome.by.runs is not null then 'run'
+             WHEN info.outcome.by.wickets is not null then 'wickets'
+             WHEN info.outcome.result = 'tie' THEN 'tie' 
+             ELSE 'unknown'
+             END AS win_type,
+        COALESCE (info.outcome['by']['runs'],info.outcome['by']['wickets'],0) AS win_margin,
         -- Innings & Over
         innings_pos + 1                                      AS innings_number,
         inning.team                                      AS batting_team,
@@ -42,7 +59,7 @@ def flatten_to_bronze(spark):
         delivery.non_striker                                 AS non_striker,
         CASE WHEN delivery.extras.wides IS NULL
         and delivery.extras.noballs IS NULL THEN true
-        else false END AS legal_ball,
+        else false END AS is_legal_delivery,
         -- Runs
         over_data.over                                       AS over_number,
         delivery.runs.batter                                 AS runs_batter,
