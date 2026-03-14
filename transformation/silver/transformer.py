@@ -35,7 +35,9 @@ def build_fact_delivery(spark:SparkSession):
         p1.player_id player_id_batter,         --FK → dim_player
         p2.player_id player_id_bowler,         --FK → dim_player
         p3.player_id player_id_non_striker,    --FK → dim_player
-
+        batting_team,
+        bowling_team,
+                     
         -- Positional
         innings_number,
         over_number,
