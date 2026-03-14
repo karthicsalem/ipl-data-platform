@@ -50,8 +50,9 @@ def flatten_to_bronze(spark):
         COALESCE (info.outcome['by']['runs'],info.outcome['by']['wickets'],0) AS win_margin,
         -- Innings & Over
         innings_pos + 1                                      AS innings_number,
-        inning.team                                      AS batting_team,
-
+        inning.team                                          AS batting_team,
+        CASE when inning.team=info.teams[0] then info.teams[1]
+        else info.teams[0] end                               AS bowling_team,
         -- Delivery
         delivery_pos                                         AS delivery_index,
         delivery.batter                                      AS batter,
