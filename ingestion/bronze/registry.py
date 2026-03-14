@@ -51,7 +51,7 @@ def db_setup():
         ingested_at  TEXT )
                  """)
     conn.commit()
-    print('DB and table ready\n')
+    print('DB and table ready')
     return conn
 
 def get_registry_state(conn):
@@ -95,3 +95,18 @@ def close_connection(conn):
     print('Connection closed..')
     return None
 
+def extract_player_registry(files):
+    """
+    Extracts name->id mappings from raw JSON files
+    Returns list of (player_name, player_id) tuples
+    """
+    players = {}
+    for file in files:
+        with open(file) as f:
+            data= json.load(f)
+            people = data['info']['registry']['people']
+            for (name,player_id) in people.items():
+                players[(player_id,name)] = 1
+    return players.keys()
+# TODO: at scale, replace with explicit MapType schema approach
+# to avoid collecting data on driver
