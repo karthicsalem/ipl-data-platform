@@ -42,4 +42,5 @@ bowling_scorecard = duckdb.sql("""
                 ROUND(runs_conceded * 6.0 / NULLIF(balls_bowled, 0), 2) AS economy,
                 ROUND(runs_conceded / NULLIF(wickets, 0), 2) AS bowling_average
             from base order by match_id,innings_number                            
-""").show(max_width=1000)
+""")
+bowling_scorecard.show(max_width=1000)
