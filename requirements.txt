@@ -1,0 +1,2 @@
+# Core
+pyspark==4.0.0

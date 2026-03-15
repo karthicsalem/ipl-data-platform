@@ -2,3 +2,6 @@ data/
 .env
 __pycache__
 .ipynb_checkpoints
+/venv
+.DS_Store
+ingestion/bronze/explore.py
