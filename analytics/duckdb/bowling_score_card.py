@@ -16,12 +16,12 @@ bowling_scorecard = duckdb.sql("""
             array_sort(d.name_variants)[1]          AS bowler_name,
             f.batting_team,
             f.bowling_team,
-            sum(is_legal_delivery) AS balls_bowled,
+            sum(CAST(is_legal_delivery AS INT)) AS balls_bowled,
             SUM(CASE WHEN runs_total = 0 
             AND is_legal_delivery = true 
             THEN 1 ELSE 0 END)      AS dot_balls,
-            CAST(FLOOR(SUM(is_legal_delivery) / 6) AS INTEGER) || '.' || 
-            (SUM(is_legal_delivery) % 6)  AS overs_bowled,
+            CAST(FLOOR(SUM(CAST(is_legal_delivery AS INT)) / 6) AS INTEGER) || '.' || 
+            (SUM(CAST(is_legal_delivery AS INT)) % 6)  AS overs_bowled,
             sum(runs_batter + coalesce(extras_wides,0) + coalesce(extras_noballs,0)) as runs_conceded,
             SUM(COALESCE(extras_wides, 0))    AS wides,
             SUM(COALESCE(extras_noballs, 0))  AS noballs,

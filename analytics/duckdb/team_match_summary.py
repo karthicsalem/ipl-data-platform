@@ -17,7 +17,7 @@ match_summary = duckdb.sql(
         bowling_team,
         SUM(runs_total)                                          AS total_runs,
         SUM(CASE WHEN is_wicket = 1 THEN 1 ELSE 0 END)          AS total_wickets,
-        SUM(is_legal_delivery)                                   AS total_balls,
+        SUM(CAST(is_legal_delivery AS INT))                                   AS total_balls,
         SUM(COALESCE(extras_wides,0) + COALESCE(extras_noballs,0) 
             + COALESCE(extras_byes,0) + COALESCE(extras_legbyes,0)) AS total_extras
     FROM fact_del
