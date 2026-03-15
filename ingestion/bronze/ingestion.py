@@ -1,6 +1,7 @@
 
 import sys,os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from transformation.gold.transformer import GoldTransformer
 
 from registry import (
     db_setup,
@@ -67,6 +68,16 @@ def main():
         .mode('overwrite') \
         .parquet('data/silver/fact_delivery/')
 
+    # ── Gold ───────────────────────────────────────────────
+    gold = GoldTransformer(spark)
+    #TODO : review partition columns
+    gold.write_gold(gold.build_batting_scorecard(),   "batting_scorecard", partition_col="match_id")
+    gold.write_gold(gold.build_bowling_scorecard(),   "bowling_scorecard", partition_col="match_id")
+    gold.write_gold(gold.build_team_match_summary(),  "team_match_summary", partition_col="match_id")
+    gold.write_gold(gold.build_player_season_stats(), "player_season_stats")
+    for table in ["batting_scorecard", "bowling_scorecard", "team_match_summary", "player_season_stats"]:
+        count = spark.read.parquet(f"data/gold/{table}").count()
+        print(f"{table}: {count}")
     # ── Update registry ────────────────────────────────────
     update_registry(conn, files)
     close_connection(conn)
