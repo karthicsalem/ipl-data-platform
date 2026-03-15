@@ -20,6 +20,10 @@ def extract_match_player_registry(spark):
                 LATERAL view explode(from_json(to_json(info.registry.people),'map<string,string>')) as player_name,player_id
         """)
     player_registry_df.createOrReplaceTempView('player_match_registry')
+    
+    player_registry_df.write \
+        .mode("overwrite") \
+        .parquet("data/silver/match_player_registry/")
     print(f"Player match registry built: {player_registry_df.count()} records")
 
 def flatten_to_bronze(spark):
