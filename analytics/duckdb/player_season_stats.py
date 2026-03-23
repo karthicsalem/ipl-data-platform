@@ -6,9 +6,7 @@ from bowling_score_card import bowling_scorecard
 fact_del = duckdb.sql("SELECT * FROM 'data/silver/fact_delivery/*.parquet'")
 dim_match = duckdb.sql("SELECT * FROM 'data/silver/dim_match/*.parquet'")
 dim_player = duckdb.sql("SELECT * FROM 'data/silver/dim_player/*.parquet'")
-match_player_registry = duckdb.sql(
-    "SELECT * FROM 'data/silver/match_player_registry/*.parquet'"
-)
+match_player_registry = duckdb.sql("SELECT * FROM 'data/silver/match_player_registry/*.parquet'")
 
 print(batting_scorecard.columns)
 print(bowling_scorecard.columns)
@@ -37,9 +35,9 @@ player_season_stats = duckdb.sql("""
             SUM(bs.sixes)                           AS sixes,
             SUM(bs.dot_balls)                       AS dot_balls,
             SUM(bs.not_out)                         AS not_outs,
-            SUM(CASE WHEN bs.runs >= 50 
+            SUM(CASE WHEN bs.runs >= 50
                 AND bs.runs < 100 THEN 1 ELSE 0 END) AS fifties,
-            SUM(CASE WHEN bs.runs >= 100 
+            SUM(CASE WHEN bs.runs >= 100
                 THEN 1 ELSE 0 END)                  AS hundreds
         FROM batting_scorecard bs
         LEFT JOIN dim_match m ON bs.match_id = m.match_id
@@ -54,8 +52,8 @@ player_season_stats = duckdb.sql("""
             COUNT(DISTINCT bs.match_id)             AS innings,
             SUM(bs.runs_conceded)                   AS runs_conceded,
             SUM(bs.balls_bowled)                    AS balls_bowled,
-            CAST(FLOOR(SUM(bs.balls_bowled)/6) 
-                AS INTEGER) || '.' || 
+            CAST(FLOOR(SUM(bs.balls_bowled)/6)
+                AS INTEGER) || '.' ||
                 (SUM(bs.balls_bowled) % 6)          AS overs_bowled,
             SUM(bs.wides)                           AS wides,
             SUM(bs.noballs)                         AS noballs,
@@ -83,9 +81,9 @@ player_season_stats = duckdb.sql("""
         ba.not_outs,
         ba.fifties,
         ba.hundreds,
-        ROUND(ba.runs * 100.0 / 
+        ROUND(ba.runs * 100.0 /
             NULLIF(ba.balls_faced, 0), 2)           AS strike_rate,
-        CASE WHEN (ba.innings - ba.not_outs) = 0 
+        CASE WHEN (ba.innings - ba.not_outs) = 0
         THEN ba.runs
         ELSE ROUND(ba.runs / (ba.innings - ba.not_outs), 2)
         END AS batting_average,
@@ -99,10 +97,8 @@ player_season_stats = duckdb.sql("""
         bo.noballs,
         bo.dot_balls                                AS dot_balls_bowled,
         bo.wickets,
-        ROUND(bo.runs_conceded * 6.0 / 
-            NULLIF(bo.balls_bowled, 0), 2)          AS economy_rate,
-        ROUND(bo.runs_conceded / 
-            NULLIF(bo.wickets, 0), 2)               AS bowling_average
+        ROUND(bo.runs_conceded * 6.0 /NULLIF(bo.balls_bowled, 0), 2)          AS economy_rate,
+        ROUND(bo.runs_conceded /NULLIF(bo.wickets, 0), 2)               AS bowling_average
 
     FROM player_matches pm
     LEFT JOIN batting_stats ba

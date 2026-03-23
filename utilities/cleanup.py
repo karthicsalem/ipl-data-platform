@@ -1,6 +1,6 @@
-import sqlite3
-import shutil
 import os
+import shutil
+import sqlite3
 from datetime import datetime
 
 DB_PATH = "data/local_db/ipl.db"
@@ -24,7 +24,7 @@ def backup_registry(conn):
     conn.execute(
         """
         INSERT INTO registry_history
-        SELECT 
+        SELECT
             match_id,
             revision,
             created,
@@ -77,7 +77,7 @@ def run_cleanup(clear_bronze=True, clear_silver=True):
     if clear_silver:
         clear_parquet(SILVER_PATH, "Silver")
 
-    print(f"\n--- Cleanup complete ---\n")
+    print("\n--- Cleanup complete ---\n")
 
 
 if __name__ == "__main__":

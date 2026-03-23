@@ -57,12 +57,12 @@ class GoldTransformer:
                 f.player_id_batter,
                 array_sort(d.name_variants)[0],
                 f.batting_team,
-                f.bowling_team  
+                f.bowling_team
         )
         SELECT
             *,
                     RANK() OVER (
-                PARTITION BY match_id, innings_number 
+                PARTITION BY match_id, innings_number
                 ORDER BY first_ball
             ) AS batting_position,
             ROUND(runs * 100.0 / NULLIF(balls_faced, 0), 2) AS strike_rate
@@ -75,7 +75,7 @@ class GoldTransformer:
     def build_bowling_scorecard(self):
         bowling_scorecard = self.spark.sql("""
             with base as (
-                SELECT             
+                SELECT
                 f.match_id,
                 f.innings_number,
                 f.player_id_bowler,
@@ -83,15 +83,15 @@ class GoldTransformer:
                 f.batting_team,
                 f.bowling_team,
                 sum(CAST(is_legal_delivery AS INT)) AS balls_bowled,
-                SUM(CASE WHEN runs_total = 0 
-                AND is_legal_delivery = true 
+                SUM(CASE WHEN runs_total = 0
+                AND is_legal_delivery = true
                 THEN 1 ELSE 0 END)      AS dot_balls,
-                CAST(FLOOR(SUM(CAST(is_legal_delivery AS INT)) / 6) AS INTEGER) || '.' || 
+                CAST(FLOOR(SUM(CAST(is_legal_delivery AS INT)) / 6) AS INTEGER) || '.' ||
                 (SUM(CAST(is_legal_delivery AS INT)) % 6)  AS overs_bowled,
                 sum(runs_batter + coalesce(extras_wides,0) + coalesce(extras_noballs,0)) as runs_conceded,
                 SUM(COALESCE(extras_wides, 0))    AS wides,
                 SUM(COALESCE(extras_noballs, 0))  AS noballs,
-                SUM(CASE WHEN is_wicket = 1 
+                SUM(CASE WHEN is_wicket = 1
                 AND dismissal_kind NOT IN ('run out', 'obstructing the field', 'retired hurt')
                 THEN 1 ELSE 0 END) AS wickets
             FROM fact_del f
@@ -107,7 +107,7 @@ class GoldTransformer:
             select *,
                     ROUND(runs_conceded * 6.0 / NULLIF(balls_bowled, 0), 2) AS economy,
                     ROUND(runs_conceded / NULLIF(wickets, 0), 2) AS bowling_average
-                from base order by match_id,innings_number 
+                from base order by match_id,innings_number
             """)
         bowling_scorecard.createOrReplaceTempView("bowling_scorecard")
         return bowling_scorecard
@@ -123,19 +123,19 @@ class GoldTransformer:
             SUM(runs_total)                                          AS total_runs,
             SUM(CASE WHEN is_wicket = 1 THEN 1 ELSE 0 END)          AS total_wickets,
             SUM(CAST(is_legal_delivery AS INT))                                   AS total_balls,
-            SUM(COALESCE(extras_wides,0) + COALESCE(extras_noballs,0) 
+            SUM(COALESCE(extras_wides,0) + COALESCE(extras_noballs,0)
                 + COALESCE(extras_byes,0) + COALESCE(extras_legbyes,0)) AS total_extras
         FROM fact_del
         GROUP BY match_id, innings_number, batting_team, bowling_team
         )
         SELECT
         i.*,m.win_type,
-        CAST(FLOOR(total_balls / 6) AS INTEGER) || '.' || 
+        CAST(FLOOR(total_balls / 6) AS INTEGER) || '.' ||
             (total_balls % 6)                                        AS overs_played,
         ROUND(total_runs * 6.0 / NULLIF(total_balls, 0), 2)         AS run_rate,
 
         -- Target: first innings total + 1, only relevant for innings 2
-        CASE WHEN innings_number % 2 = 0 
+        CASE WHEN innings_number % 2 = 0
             AND win_type != 'unknown'
         THEN LAG(total_runs) OVER (
                 PARTITION BY i.match_id ORDER BY innings_number
@@ -172,9 +172,9 @@ class GoldTransformer:
                 SUM(bs.sixes)                           AS sixes,
                 SUM(bs.dot_balls)                       AS dot_balls,
                 SUM(bs.not_out)                         AS not_outs,
-                SUM(CASE WHEN bs.runs >= 50 
+                SUM(CASE WHEN bs.runs >= 50
                     AND bs.runs < 100 THEN 1 ELSE 0 END) AS fifties,
-                SUM(CASE WHEN bs.runs >= 100 
+                SUM(CASE WHEN bs.runs >= 100
                     THEN 1 ELSE 0 END)                  AS hundreds
             FROM batting_scorecard bs
             LEFT JOIN dim_match m ON bs.match_id = m.match_id
@@ -189,8 +189,8 @@ class GoldTransformer:
                 COUNT(DISTINCT bs.match_id)             AS innings,
                 SUM(bs.runs_conceded)                   AS runs_conceded,
                 SUM(bs.balls_bowled)                    AS balls_bowled,
-                CAST(FLOOR(SUM(bs.balls_bowled)/6) 
-                    AS INTEGER) || '.' || 
+                CAST(FLOOR(SUM(bs.balls_bowled)/6)
+                    AS INTEGER) || '.' ||
                     (SUM(bs.balls_bowled) % 6)          AS overs_bowled,
                 SUM(bs.wides)                           AS wides,
                 SUM(bs.noballs)                         AS noballs,
@@ -218,9 +218,9 @@ class GoldTransformer:
             ba.not_outs,
             ba.fifties,
             ba.hundreds,
-            ROUND(ba.runs * 100.0 / 
+            ROUND(ba.runs * 100.0 /
                 NULLIF(ba.balls_faced, 0), 2)           AS strike_rate,
-            CASE WHEN (ba.innings - ba.not_outs) = 0 
+            CASE WHEN (ba.innings - ba.not_outs) = 0
             THEN ba.runs
             ELSE ROUND(ba.runs / (ba.innings - ba.not_outs), 2)
             END AS batting_average,
@@ -234,9 +234,9 @@ class GoldTransformer:
             bo.noballs,
             bo.dot_balls                                AS dot_balls_bowled,
             bo.wickets,
-            ROUND(bo.runs_conceded * 6.0 / 
+            ROUND(bo.runs_conceded * 6.0 /
                 NULLIF(bo.balls_bowled, 0), 2)          AS economy_rate,
-            ROUND(bo.runs_conceded / 
+            ROUND(bo.runs_conceded /
                 NULLIF(bo.wickets, 0), 2)               AS bowling_average
 
         FROM player_matches pm
@@ -249,7 +249,5 @@ class GoldTransformer:
         ORDER BY pm.season, pm.matches_played DESC""")
 
     def write_gold(self, df, table_name, partition_col="season"):
-        df.write.mode("overwrite").partitionBy(partition_col).parquet(
-            f"data/gold/{table_name}/"
-        )
+        df.write.mode("overwrite").partitionBy(partition_col).parquet(f"data/gold/{table_name}/")
         print(f"Written gold table: {table_name}")

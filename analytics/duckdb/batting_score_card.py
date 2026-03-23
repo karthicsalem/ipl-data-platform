@@ -43,12 +43,12 @@ batting_scorecard = duckdb.sql("""
             f.player_id_batter,
             array_sort(d.name_variants)[1],
             f.batting_team,
-            f.bowling_team  
-    )
+            f.bowling_team
+                               )
     SELECT
         *,
                 RANK() OVER (
-            PARTITION BY match_id, innings_number 
+            PARTITION BY match_id, innings_number
             ORDER BY first_ball
         ) AS batting_position,
         ROUND(runs * 100.0 / NULLIF(balls_faced, 0), 2) AS strike_rate

@@ -38,9 +38,7 @@ def extract_match_player_registry(spark):
         """)
     player_registry_df.createOrReplaceTempView("player_match_registry")
 
-    player_registry_df.write.mode("overwrite").parquet(
-        "data/silver/match_player_registry/"
-    )
+    player_registry_df.write.mode("overwrite").parquet("data/silver/match_player_registry/")
     print(f"Player match registry built: {player_registry_df.count()} records")
 
 
@@ -66,7 +64,7 @@ def flatten_to_bronze(spark):
         info.player_of_match[0]                              AS player_of_match,
         CASE WHEN info.outcome.by.runs is not null then 'run'
              WHEN info.outcome.by.wickets is not null then 'wickets'
-             WHEN info.outcome.result = 'tie' THEN 'tie' 
+             WHEN info.outcome.result = 'tie' THEN 'tie'
              ELSE 'unknown'
              END AS win_type,
         COALESCE (info.outcome['by']['runs'],info.outcome['by']['wickets'],0) AS win_margin,
@@ -96,7 +94,7 @@ def flatten_to_bronze(spark):
         delivery.extras.legbyes                              AS extras_legbyes,
 
         -- Wicket (all nullable)
-        CASE WHEN delivery.wickets IS NOT NULL THEN 1 
+        CASE WHEN delivery.wickets IS NOT NULL THEN 1
              ELSE 0 END                                  AS is_wicket,
         delivery.wickets[0].player_out                       AS player_out,
         delivery.wickets[0].kind                             AS dismissal_kind,
@@ -104,7 +102,6 @@ def flatten_to_bronze(spark):
 
         -- Miscellaneous
         CASE WHEN inning.super_over IS NULL THEN 0 ELSE 1 END AS is_super_over,
-                        
 
         -- Ingestion metadata
         regexp_extract(input_file_name(), '([^/]+)\\.json$', 1)||'.json'    AS source_file,
@@ -119,7 +116,5 @@ def flatten_to_bronze(spark):
 
 
 def write_bronze(bronze_df):
-    bronze_df.write.mode("overwrite").partitionBy("season").parquet(
-        "data/bronze/deliveries/"
-    )
+    bronze_df.write.mode("overwrite").partitionBy("season").parquet("data/bronze/deliveries/")
     return None
