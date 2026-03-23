@@ -15,12 +15,8 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
-        run: |
-          pip install black flake8
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Check formatting
-        run: black --check .
-
-      - name: Lint
-        run: flake8 . --max-line-length=120 --exclude=venv
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
