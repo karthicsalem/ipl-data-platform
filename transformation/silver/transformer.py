@@ -5,9 +5,7 @@ def build_dim_player(spark, player_records):
     from pyspark.sql.functions import collect_set
 
     df = spark.createDataFrame(player_records, ["player_id", "player_name"])
-    dim_player = df.groupby("player_id").agg(
-        collect_set("player_name").alias("name_variants")
-    )
+    dim_player = df.groupby("player_id").agg(collect_set("player_name").alias("name_variants"))
     return dim_player
 
 
