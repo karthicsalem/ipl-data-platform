@@ -1,12 +1,15 @@
-import os
-import sys
-
 from registry import (
     close_connection,
     db_setup,
     extract_player_registry,
     get_unprocessed_files,
     update_registry,
+)
+from transformation.gold.transformer import GoldTransformer
+from transformation.silver.transformer import (
+    build_dim_match,
+    build_dim_player,
+    build_fact_delivery,
 )
 from transformer import (
     create_spark_session,
@@ -15,15 +18,6 @@ from transformer import (
     read_raw_json,
     write_bronze,
 )
-
-from transformation.gold.transformer import GoldTransformer
-from transformation.silver.transformer import (
-    build_dim_match,
-    build_dim_player,
-    build_fact_delivery,
-)
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
 def main():
