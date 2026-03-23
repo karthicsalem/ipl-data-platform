@@ -1,13 +1,17 @@
 from pyspark.sql import SparkSession
 
+
 def build_dim_player(spark, player_records):
     from pyspark.sql.functions import collect_set
-    df = spark.createDataFrame(player_records,['player_id','player_name'])
-    dim_player = df.groupby('player_id')\
-                    .agg(collect_set('player_name').alias('name_variants'))
+
+    df = spark.createDataFrame(player_records, ["player_id", "player_name"])
+    dim_player = df.groupby("player_id").agg(
+        collect_set("player_name").alias("name_variants")
+    )
     return dim_player
 
-def build_dim_match(spark:SparkSession):
+
+def build_dim_match(spark: SparkSession):
     return spark.sql("""
         SELECT DISTINCT
             match_id,
@@ -28,7 +32,8 @@ def build_dim_match(spark:SparkSession):
         FROM bronze
     """)
 
-def build_fact_delivery(spark:SparkSession):
+
+def build_fact_delivery(spark: SparkSession):
     return spark.sql("""
         -- Keys
         Select b.match_id,          --FK → dim_match
@@ -37,7 +42,7 @@ def build_fact_delivery(spark:SparkSession):
         p3.player_id player_id_non_striker,    --FK → dim_player
         batting_team,
         bowling_team,
-                     
+
         -- Positional
         innings_number,
         over_number,
@@ -69,7 +74,7 @@ def build_fact_delivery(spark:SparkSession):
         and b.batter = p1.player_name
         left join player_match_registry p2
         on b.match_id = p2.match_id
-        and b.bowler = p2.player_name        
+        and b.bowler = p2.player_name
         left join player_match_registry p3
         on b.match_id = p3.match_id
         and b.non_striker = p3.player_name

@@ -5,6 +5,7 @@ import json
 DB_PATH = "data/local_db/ipl.db"
 RAW_DIR = "data/raw/ipl_json"
 
+
 # get_unprocessed_files opens every file to read meta
 # This is fine for now but a known bottleneck at scale - becomes the manifest pattern
 def get_unprocessed_files(conn):
@@ -36,12 +37,13 @@ def get_unprocessed_files(conn):
     print(f"{len(to_process)} files to process")
     return to_process
 
+
 def db_setup():
     os.makedirs("data/local_db", exist_ok=True)
-    conn=sqlite3.connect(DB_PATH)
-    version= conn.execute('SELECT SQLITE_VERSION()')
+    conn = sqlite3.connect(DB_PATH)
+    version = conn.execute("SELECT SQLITE_VERSION()")
     data = version.fetchone()
-    print('SQLite version:', data,'')
+    print("SQLite version:", data, "")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS registry (
         match_id TEXT primary key,
@@ -51,13 +53,15 @@ def db_setup():
         ingested_at  TEXT )
                  """)
     conn.commit()
-    print('DB and table ready')
+    print("DB and table ready")
     return conn
+
 
 def get_registry_state(conn):
     """Returns dict of {match_id: revision} for quick lookup"""
     rows = conn.execute("SELECT match_id, revision FROM registry").fetchall()
     return {row[0]: row[1] for row in rows}
+
 
 def update_registry(conn, files):
     """
@@ -73,27 +77,32 @@ def update_registry(conn, files):
 
         match_id = os.path.basename(filepath).replace(".json", "")
 
-        conn.execute("""
+        conn.execute(
+            """
             INSERT INTO registry (match_id, revision, created, data_version, ingested_at)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(match_id) DO UPDATE SET
                 revision     = excluded.revision,
                 ingested_at  = excluded.ingested_at
-        """, (
-            match_id,
-            meta["revision"],
-            meta["created"],
-            meta["data_version"],
-            datetime.now().isoformat()
-        ))
+        """,
+            (
+                match_id,
+                meta["revision"],
+                meta["created"],
+                meta["data_version"],
+                datetime.now().isoformat(),
+            ),
+        )
 
     conn.commit()
     print(f"Registry updated for {len(files)} files")
-    
+
+
 def close_connection(conn):
     conn.close()
-    print('Connection closed..')
+    print("Connection closed..")
     return None
+
 
 def extract_player_registry(files):
     """
@@ -105,15 +114,17 @@ def extract_player_registry(files):
     for file in files:
         with open(file) as f:
             data = json.load(f)
-            registry = data['info']['registry']['people']
+            registry = data["info"]["registry"]["people"]
             # info.players = {team_name: [player_names]}
             # only pull names that appear in a team squad
-            for team, squad in data['info']['players'].items():
+            for team, squad in data["info"]["players"].items():
                 for name in squad:
                     if name in registry:
                         player_id = registry[name]
                         players[(player_id, name)] = 1
 
     return list(players.keys())
+
+
 # TODO: at scale, replace with explicit MapType schema approach
 # to avoid collecting data on driver

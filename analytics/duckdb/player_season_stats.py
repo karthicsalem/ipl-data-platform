@@ -1,11 +1,14 @@
 import duckdb
 from batting_score_card import batting_scorecard
 from bowling_score_card import bowling_scorecard
+
 # ── Connections ────────────────────────────────────────────────────────────────
 fact_del = duckdb.sql("SELECT * FROM 'data/silver/fact_delivery/*.parquet'")
 dim_match = duckdb.sql("SELECT * FROM 'data/silver/dim_match/*.parquet'")
 dim_player = duckdb.sql("SELECT * FROM 'data/silver/dim_player/*.parquet'")
-match_player_registry = duckdb.sql("SELECT * FROM 'data/silver/match_player_registry/*.parquet'")
+match_player_registry = duckdb.sql(
+    "SELECT * FROM 'data/silver/match_player_registry/*.parquet'"
+)
 
 print(batting_scorecard.columns)
 print(bowling_scorecard.columns)

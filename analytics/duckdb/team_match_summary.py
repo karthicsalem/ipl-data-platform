@@ -5,10 +5,9 @@ fact_del = duckdb.sql("SELECT * FROM 'data/silver/fact_delivery/*.parquet'")
 dim_match = duckdb.sql("SELECT * FROM 'data/silver/dim_match/*.parquet'")
 dim_player = duckdb.sql("SELECT * FROM 'data/silver/dim_player/*.parquet'")
 
-duckdb.sql('select distinct win_type from dim_match').show()
+duckdb.sql("select distinct win_type from dim_match").show()
 # ── Match Summary ──────────────────────────────────────────────────────────
-match_summary = duckdb.sql(
-    """
+match_summary = duckdb.sql("""
     WITH innings_totals AS (
     SELECT
         match_id,
@@ -40,5 +39,4 @@ match_summary = duckdb.sql(
     left join dim_match m
     on i.match_id = m.match_id
     ORDER BY i.match_id, innings_number
-    """
-).show()
+    """).show()

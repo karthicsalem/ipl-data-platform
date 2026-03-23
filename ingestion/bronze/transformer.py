@@ -1,17 +1,20 @@
 from pyspark.sql import SparkSession
 
+
 def create_spark_session():
     spark = SparkSession.builder.master("local[*]").appName("ingesion").getOrCreate()
     spark.conf.set("spark.sql.sources.partitionOverwriteMode", "dynamic")
     return spark
 
-def read_raw_json(spark,files):
-    raw_df=spark.read.option("multiLine", True).json(files)
+
+def read_raw_json(spark, files):
+    raw_df = spark.read.option("multiLine", True).json(files)
     raw_df.createOrReplaceTempView("row_wise")
     return raw_df
 
+
 def extract_match_player_registry(spark):
-    player_registry_df= spark.sql("""
+    player_registry_df = spark.sql("""
         WITH registry AS (
             SELECT
                 regexp_extract(input_file_name(), '([^/]+)\\.json$', 1) AS match_id,
@@ -33,12 +36,13 @@ def extract_match_player_registry(spark):
         SELECT DISTINCT match_id, player_name, player_id, team
         FROM registry
         """)
-    player_registry_df.createOrReplaceTempView('player_match_registry')
-    
-    player_registry_df.write \
-        .mode("overwrite") \
-        .parquet("data/silver/match_player_registry/")
+    player_registry_df.createOrReplaceTempView("player_match_registry")
+
+    player_registry_df.write.mode("overwrite").parquet(
+        "data/silver/match_player_registry/"
+    )
     print(f"Player match registry built: {player_registry_df.count()} records")
+
 
 def flatten_to_bronze(spark):
     bronze_df = spark.sql("""
@@ -113,9 +117,9 @@ def flatten_to_bronze(spark):
     """)
     return bronze_df
 
+
 def write_bronze(bronze_df):
-    bronze_df.write \
-        .mode("overwrite") \
-        .partitionBy("season") \
-        .parquet("data/bronze/deliveries/")
+    bronze_df.write.mode("overwrite").partitionBy("season").parquet(
+        "data/bronze/deliveries/"
+    )
     return None

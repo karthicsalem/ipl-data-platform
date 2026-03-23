@@ -1,27 +1,26 @@
 from pyspark.sql import SparkSession
 
+
 class GoldTransformer:
     def __init__(self, spark: SparkSession):
         self.spark = spark
         self._register_silver_views()
-    
+
     def _register_silver_views(self):
         """Register all Silver parquet files as Spark temp views"""
         views = {
-            "fact_del"              : "data/silver/fact_delivery",
-            "dim_match"             : "data/silver/dim_match",
-            "dim_player"            : "data/silver/dim_player",
-            "match_player_registry" : "data/silver/match_player_registry"
+            "fact_del": "data/silver/fact_delivery",
+            "dim_match": "data/silver/dim_match",
+            "dim_player": "data/silver/dim_player",
+            "match_player_registry": "data/silver/match_player_registry",
         }
         for view_name, path in views.items():
             if path:
-                self.spark.read.parquet(path) \
-                    .createOrReplaceTempView(view_name)
+                self.spark.read.parquet(path).createOrReplaceTempView(view_name)
                 print(f"Registered view: {view_name}")
 
     def build_batting_scorecard(self):
-        batting_scorecard = self.spark.sql(
-            """
+        batting_scorecard = self.spark.sql("""
         WITH base AS (
             SELECT
                 f.match_id,
@@ -69,14 +68,12 @@ class GoldTransformer:
             ROUND(runs * 100.0 / NULLIF(balls_faced, 0), 2) AS strike_rate
         FROM base
         ORDER BY match_id, innings_number, batting_position
-            """
-        )
-        batting_scorecard.createOrReplaceTempView('batting_scorecard')
+            """)
+        batting_scorecard.createOrReplaceTempView("batting_scorecard")
         return batting_scorecard
 
     def build_bowling_scorecard(self):
-        bowling_scorecard = self.spark.sql(
-            """
+        bowling_scorecard = self.spark.sql("""
             with base as (
                 SELECT             
                 f.match_id,
@@ -111,14 +108,12 @@ class GoldTransformer:
                     ROUND(runs_conceded * 6.0 / NULLIF(balls_bowled, 0), 2) AS economy,
                     ROUND(runs_conceded / NULLIF(wickets, 0), 2) AS bowling_average
                 from base order by match_id,innings_number 
-            """
-        )
-        bowling_scorecard.createOrReplaceTempView('bowling_scorecard')
+            """)
+        bowling_scorecard.createOrReplaceTempView("bowling_scorecard")
         return bowling_scorecard
-        
+
     def build_team_match_summary(self):
-        return self.spark.sql(
-            """
+        return self.spark.sql("""
             WITH innings_totals AS (
         SELECT
             match_id,
@@ -150,12 +145,10 @@ class GoldTransformer:
         left join dim_match m
         on i.match_id = m.match_id
         ORDER BY i.match_id, innings_number
-            """
-        )
+            """)
 
     def build_player_season_stats(self):
-        return self.spark.sql(
-            """
+        return self.spark.sql("""
                 WITH player_matches AS (
             SELECT
                 r.player_id,
@@ -253,12 +246,10 @@ class GoldTransformer:
         LEFT JOIN bowling_stats bo
             ON pm.player_id = bo.player_id_bowler
             AND pm.season = bo.season
-        ORDER BY pm.season, pm.matches_played DESC"""
-        )
+        ORDER BY pm.season, pm.matches_played DESC""")
 
     def write_gold(self, df, table_name, partition_col="season"):
-        df.write \
-            .mode("overwrite") \
-            .partitionBy(partition_col) \
-            .parquet(f"data/gold/{table_name}/")
+        df.write.mode("overwrite").partitionBy(partition_col).parquet(
+            f"data/gold/{table_name}/"
+        )
         print(f"Written gold table: {table_name}")
