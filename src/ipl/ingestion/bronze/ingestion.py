@@ -1,6 +1,9 @@
-import os
-import sys
-
+from ipl.transformation.gold.transformer import GoldTransformer
+from ipl.transformation.silver.transformer import (
+    build_dim_match,
+    build_dim_player,
+    build_fact_delivery,
+)
 from registry import (
     close_connection,
     db_setup,
@@ -15,15 +18,6 @@ from transformer import (
     read_raw_json,
     write_bronze,
 )
-
-from transformation.gold.transformer import GoldTransformer
-from transformation.silver.transformer import (
-    build_dim_match,
-    build_dim_player,
-    build_fact_delivery,
-)
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
 def main():
