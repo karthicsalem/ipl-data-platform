@@ -51,3 +51,10 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+
+[tool.bandit]
+exclude_dirs = ["venv", "tests"]
+skips = [
+    "B101",  # assert statements — fine in tests
+    "B603",  # subprocess — we don't use it but PySpark internals trigger it
+]
