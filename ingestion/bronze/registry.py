@@ -98,15 +98,22 @@ def close_connection(conn):
 def extract_player_registry(files):
     """
     Extracts name->id mappings from raw JSON files
-    Returns list of (player_name, player_id) tuples
+    Only includes actual players from info.players (excludes officials)
+    Returns list of (player_id, player_name) tuples
     """
     players = {}
     for file in files:
         with open(file) as f:
-            data= json.load(f)
-            people = data['info']['registry']['people']
-            for (name,player_id) in people.items():
-                players[(player_id,name)] = 1
-    return players.keys()
+            data = json.load(f)
+            registry = data['info']['registry']['people']
+            # info.players = {team_name: [player_names]}
+            # only pull names that appear in a team squad
+            for team, squad in data['info']['players'].items():
+                for name in squad:
+                    if name in registry:
+                        player_id = registry[name]
+                        players[(player_id, name)] = 1
+
+    return list(players.keys())
 # TODO: at scale, replace with explicit MapType schema approach
 # to avoid collecting data on driver

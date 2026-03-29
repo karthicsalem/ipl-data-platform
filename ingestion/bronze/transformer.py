@@ -12,12 +12,26 @@ def read_raw_json(spark,files):
 
 def extract_match_player_registry(spark):
     player_registry_df= spark.sql("""
-                SELECT
+        WITH registry AS (
+            SELECT
                 regexp_extract(input_file_name(), '([^/]+)\\.json$', 1) AS match_id,
                 player_name,
-                player_id
-                from row_wise rw
-                LATERAL view explode(from_json(to_json(info.registry.people),'map<string,string>')) as player_name,player_id
+                player_id,
+                team
+            FROM row_wise rw
+            -- explode registry into name/id pairs
+            LATERAL VIEW explode(
+                from_json(to_json(info.registry.people), 'map<string,string>')
+            ) AS player_name, player_id
+            -- explode players into team/squad pairs
+            LATERAL VIEW explode(
+                from_json(to_json(info.players), 'map<string,array<string>>')
+            ) AS team, squad
+            -- only keep registry entries that appear in a team squad
+            WHERE array_contains(squad, player_name)
+        )
+        SELECT DISTINCT match_id, player_name, player_id, team
+        FROM registry
         """)
     player_registry_df.createOrReplaceTempView('player_match_registry')
     
