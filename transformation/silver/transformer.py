@@ -58,7 +58,7 @@ def build_fact_delivery(spark:SparkSession):
         is_wicket,
         p4.player_id player_id_out,     --FK → dim_player
         dismissal_kind,
-        fielder,
+        p5.player_id player_id_fielder,
 
         -- Ingestion
         source_file,
@@ -76,4 +76,7 @@ def build_fact_delivery(spark:SparkSession):
         left join player_match_registry p4
         on b.match_id = p4.match_id
         and b.player_out = p4.player_name
+        left join player_match_registry p5
+        on b.match_id = p5.match_id
+        and b.fielder = p5.player_name
     """)
